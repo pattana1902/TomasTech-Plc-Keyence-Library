@@ -1,11 +1,39 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>TomasTech_Plc_Keyence</RootNamespace>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+		<AssemblyName>TomasTech.Plc.Keyence</AssemblyName>
+		<RootNamespace>TomasTech.Plc.Keyence</RootNamespace>
+		<PackageId>TomasTech.Plc.Keyence</PackageId>
 
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+
+		<Version>1.0.0</Version>
+		<Authors>Tomas Tech</Authors>
+		<Company>Tomas Tech</Company>
+		<Description>A C# library for communication with Keyence PLC devices, providing read/write operations and reusable components for industrial automation.</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<RepositoryUrl>https://github.com/pattana1902/TomasTech-Plc-Keyence-Library</RepositoryUrl>
+		<PackageReadmeFile>KeyenceTcpClient_MANUAL.md</PackageReadmeFile>
+		<Title>TomasTech.Plc.Keyence</Title>
+		<Product>TomasTech PLC Keyence Library</Product>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		<ImplicitUsings>disable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		<PackageReference Include="System.Buffers" Version="4.5.1" />
+		<PackageReference Include="System.Memory" Version="4.5.5" />
+		<PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="KeyenceTcpClient_MANUAL.md" Pack="true" PackagePath="" />
+	</ItemGroup>
 </Project>

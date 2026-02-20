@@ -69,7 +69,6 @@ namespace TomasTech_Plc_Keyence
             if (dotIndex > 0 && dotIndex < s.Length - 1)
             {
                 var suffix = s.Substring(dotIndex + 1);
-                var validSuffix = true;
                 dataType = suffix switch
                 {
                     "U" => PlcDataType.U,
@@ -160,7 +159,23 @@ namespace TomasTech_Plc_Keyence
             _tcp = new TcpClient();
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(OperationTimeout);
+
+#if NET5_0_OR_GREATER
             await _tcp.ConnectAsync(_host, _port, cts.Token).ConfigureAwait(false);
+#else
+            using (cts.Token.Register(() => _tcp.Dispose()))
+            {
+                try
+                {
+                    await _tcp.ConnectAsync(_host, _port).ConfigureAwait(false);
+                }
+                catch (Exception) when (cts.Token.IsCancellationRequested)
+                {
+                     // Rethrow as OperationCanceledException if it was cancelled
+                     throw new OperationCanceledException("Connection timed out or cancelled", cts.Token);
+                }
+            }
+#endif
             _stream = _tcp.GetStream();
             _stream.ReadTimeout = (int)OperationTimeout.TotalMilliseconds;
             _stream.WriteTimeout = (int)OperationTimeout.TotalMilliseconds;

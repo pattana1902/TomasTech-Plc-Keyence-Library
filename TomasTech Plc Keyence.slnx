@@ -1,3 +1,5 @@
 <Solution>
-  <Project Path="TomasTech Plc Keyence.csproj" />
+  <Project Path="TomasTech Plc Keyence.csproj">
+    <BuildType Project="Debug" />
+  </Project>
 </Solution>
