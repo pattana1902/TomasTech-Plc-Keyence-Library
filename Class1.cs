@@ -282,6 +282,15 @@ namespace TomasTech_Plc_Keyence
             return words[0] != 0;
         }
 
+        public async Task<bool[]> ReadBoolArrayAsync(string address, int count, CancellationToken cancellationToken = default)
+        {
+            if (count <= 0) throw new ArgumentOutOfRangeException(nameof(count));
+            var pa = PlcAddress.Parse(address);
+            var words = await ReadWordsAsync(pa.BaseAddress, count, cancellationToken).ConfigureAwait(false);
+            if (words == null || words.Length == 0) return Array.Empty<bool>();
+            return words.Select(w => w != 0).ToArray();
+        }
+
         public async Task WriteBoolAsync(string address, bool value, CancellationToken cancellationToken = default)
         {
             var pa = PlcAddress.Parse(address);
@@ -330,6 +339,40 @@ namespace TomasTech_Plc_Keyence
             throw new NotSupportedException($"Suffix {pa.DataType} not supported for generic read yet.");
         }
 
+        public async Task<string[]> ReadAnyArrayAsync(string address, int count, CancellationToken cancellationToken = default)
+        {
+            if (count <= 0) throw new ArgumentOutOfRangeException(nameof(count));
+            var pa = PlcAddress.Parse(address);
+
+            if (pa.DataType == PlcDataType.None || pa.DataType == PlcDataType.U || pa.DataType == PlcDataType.S || pa.DataType == PlcDataType.H || pa.DataType == PlcDataType.B)
+            {
+                var words = await ReadWordsAsync(pa.Raw, count, cancellationToken).ConfigureAwait(false);
+                if (words == null || words.Length == 0) return Array.Empty<string>();
+
+                var results = new string[Math.Min(count, words.Length)];
+                for (int i = 0; i < results.Length; i++)
+                {
+                    if (pa.DataType == PlcDataType.S)
+                        results[i] = ((short)words[i]).ToString();
+                    else if (pa.DataType == PlcDataType.H)
+                        results[i] = words[i].ToString("X4");
+                    else if (pa.DataType == PlcDataType.B)
+                        results[i] = words[i] != 0 ? "True" : "False";
+                    else
+                        results[i] = words[i].ToString();
+                }
+                return results;
+            }
+
+            if (pa.DataType == PlcDataType.D || pa.DataType == PlcDataType.L)
+            {
+                var ints = await ReadInt32ArrayAsync(pa.Raw, count, cancellationToken).ConfigureAwait(false);
+                return ints.Select(i => i.ToString()).ToArray();
+            }
+
+            throw new NotSupportedException($"Suffix {pa.DataType} not supported for generic array read yet.");
+        }
+
         public async Task<int> ReadInt32Async(string address, CancellationToken cancellationToken = default)
         {
             var pa = PlcAddress.Parse(address);
@@ -349,6 +392,31 @@ namespace TomasTech_Plc_Keyence
 
             uint combined = (high << 16) | low;
             return unchecked((int)combined);
+        }
+
+        public async Task<int[]> ReadInt32ArrayAsync(string address, int count, CancellationToken cancellationToken = default)
+        {
+            if (count <= 0) throw new ArgumentOutOfRangeException(nameof(count));
+            var pa = PlcAddress.Parse(address);
+            var words = await ReadWordsAsync(pa.BaseAddress, count * 2, cancellationToken).ConfigureAwait(false);
+            if (words == null || words.Length < count * 2) return Array.Empty<int>();
+
+            var results = new int[count];
+            for (int i = 0; i < count; i++)
+            {
+                uint low, high;
+                if (WordsOrder == WordOrder.LowHigh)
+                {
+                    low = words[i * 2]; high = words[i * 2 + 1];
+                }
+                else
+                {
+                    low = words[i * 2 + 1]; high = words[i * 2];
+                }
+                uint combined = (high << 16) | low;
+                results[i] = unchecked((int)combined);
+            }
+            return results;
         }
 
         public async Task WriteInt32Async(string address, int value, CancellationToken cancellationToken = default)
@@ -383,6 +451,32 @@ namespace TomasTech_Plc_Keyence
             var bytes = BitConverter.GetBytes(combined);
             // Should verify endianness here if needed, but assuming system endianness matches (usually Little Endian)
             return BitConverter.ToSingle(bytes, 0);
+        }
+
+        public async Task<float[]> ReadFloatArrayAsync(string address, int count, CancellationToken cancellationToken = default)
+        {
+            if (count <= 0) throw new ArgumentOutOfRangeException(nameof(count));
+            var pa = PlcAddress.Parse(address);
+            var words = await ReadWordsAsync(pa.BaseAddress, count * 2, cancellationToken).ConfigureAwait(false);
+            if (words == null || words.Length < count * 2) return Array.Empty<float>();
+
+            var results = new float[count];
+            for (int i = 0; i < count; i++)
+            {
+                uint low, high;
+                if (WordsOrder == WordOrder.LowHigh)
+                {
+                    low = words[i * 2]; high = words[i * 2 + 1];
+                }
+                else
+                {
+                    low = words[i * 2 + 1]; high = words[i * 2];
+                }
+                uint combined = (high << 16) | low;
+                var bytes = BitConverter.GetBytes(combined);
+                results[i] = BitConverter.ToSingle(bytes, 0);
+            }
+            return results;
         }
 
         public async Task WriteFloatAsync(string address, float value, CancellationToken cancellationToken = default)

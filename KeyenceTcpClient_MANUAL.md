@@ -44,9 +44,9 @@ await client.ConnectAsync();
 Use specific methods for best performance and type safety.
 
 - `ReadWordsAsync(address, count)`: Reads generic 16-bit words (unsigned).
-- `ReadInt32Async(address)`: Reads 2 words as 32-bit int.
-- `ReadFloatAsync(address)`: Reads 2 words as 32-bit float.
-- `ReadBoolAsync(address)`: Reads 1 bit/word as boolean.
+- `ReadInt32Async(address)` / `ReadInt32ArrayAsync(address, count)`: Reads 2 words as 32-bit int.
+- `ReadFloatAsync(address)` / `ReadFloatArrayAsync(address, count)`: Reads 2 words as 32-bit float.
+- `ReadBoolAsync(address)` / `ReadBoolArrayAsync(address, count)`: Reads 1 bit/word as boolean.
 
 ### Reading/Writing with Suffixes (Generic)
 Use `ReadAnyAsync` to read based on the suffix.
@@ -55,6 +55,9 @@ Use `ReadAnyAsync` to read based on the suffix.
 string val1 = await client.ReadAnyAsync("DM100.U"); // "123"
 string val2 = await client.ReadAnyAsync("DM100.S"); // "-123"
 string val3 = await client.ReadAnyAsync("DM100.H"); // "007B"
+
+// To read multiple values (e.g. DM1000 to DM1004)
+string[] values = await client.ReadAnyArrayAsync("DM1000", 5);
 ```
 
 ### ASCII Strings
