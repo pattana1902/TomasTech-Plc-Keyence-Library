@@ -37,6 +37,7 @@ namespace TomasTech_Plc_Keyence
         D, // .D: Signed 32-bit (int)
         H, // .H: Hex string (16-bit hex)
         L, // .L: Long/Signed 32-bit (same as D often, but distinct suffix)
+        B, // .B: Bit (bool)
         // Add more as needed
     }
 
@@ -76,6 +77,7 @@ namespace TomasTech_Plc_Keyence
                     "D" => PlcDataType.D,
                     "H" => PlcDataType.H,
                     "L" => PlcDataType.L,
+                    "B" => PlcDataType.B,
                     _ => PlcDataType.None
                 };
 
@@ -271,7 +273,21 @@ namespace TomasTech_Plc_Keyence
             // Write commands usually return "OK"
             if (resp?.Trim() != "OK") throw new InvalidOperationException($"Write failed: {resp}");
         }
-        
+
+        public async Task<bool> ReadBoolAsync(string address, CancellationToken cancellationToken = default)
+        {
+            var pa = PlcAddress.Parse(address);
+            var words = await ReadWordsAsync(pa.BaseAddress, 1, cancellationToken).ConfigureAwait(false);
+            if (words == null || words.Length == 0) return false;
+            return words[0] != 0;
+        }
+
+        public async Task WriteBoolAsync(string address, bool value, CancellationToken cancellationToken = default)
+        {
+            var pa = PlcAddress.Parse(address);
+            await WriteWordsAsync(pa.BaseAddress, new[] { (ushort)(value ? 1 : 0) }, cancellationToken).ConfigureAwait(false);
+        }
+
         // Helper to interpret suffixes (Generic read)
         public async Task<string> ReadAnyAsync(string address, CancellationToken cancellationToken = default)
         {
@@ -303,6 +319,12 @@ namespace TomasTech_Plc_Keyence
                 // 32-bit integer
                 var i = await ReadInt32Async(pa.Raw, cancellationToken).ConfigureAwait(false);
                 return i.ToString();
+            }
+
+            if (pa.DataType == PlcDataType.B)
+            {
+                var val = await ReadBoolAsync(pa.Raw, cancellationToken).ConfigureAwait(false);
+                return val ? "True" : "False";
             }
 
             throw new NotSupportedException($"Suffix {pa.DataType} not supported for generic read yet.");

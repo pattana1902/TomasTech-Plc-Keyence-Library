@@ -26,6 +26,7 @@ Append these to the address string to control how the data is read/formatted.
 | **.D** | Signed 32-bit integer (`int`) | `DM100.D` | `string` ("12345678") |
 | **.L** | Long (Signed 32-bit) | `DM100.L` | `string` ("12345678") |
 | **.H** | Hexadecimal (16-bit) | `DM100.H` | `string` ("ABCD") |
+| **.B** | Bit (boolean) | `MR100.B` | `string` ("True" / "False") |
 
 ### Word Order
 - Controlled by `WordsOrder` property (`LowHigh` or `HighLow`).
@@ -45,6 +46,7 @@ Use specific methods for best performance and type safety.
 - `ReadWordsAsync(address, count)`: Reads generic 16-bit words (unsigned).
 - `ReadInt32Async(address)`: Reads 2 words as 32-bit int.
 - `ReadFloatAsync(address)`: Reads 2 words as 32-bit float.
+- `ReadBoolAsync(address)`: Reads 1 bit/word as boolean.
 
 ### Reading/Writing with Suffixes (Generic)
 Use `ReadAnyAsync` to read based on the suffix.
