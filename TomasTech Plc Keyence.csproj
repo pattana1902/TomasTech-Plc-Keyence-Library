@@ -11,7 +11,7 @@
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 
-		<Version>1.0.0</Version>
+		<Version>1.0.1</Version>
 		<Authors>Tomas Tech</Authors>
 		<Company>Tomas Tech</Company>
 		<Description>A C# library for communication with Keyence PLC devices, providing read/write operations and reusable components for industrial automation.</Description>
