@@ -12,18 +12,24 @@ using System.Threading.Tasks;
 namespace TomasTech_Plc_Keyence
 {
     /// <summary>
-    /// Common PLC word types (expand as needed).
+    /// Common PLC word types — Keyence KV series all areas.
     /// </summary>
     public enum PlcWordType
     {
         Unknown,
-        DM,
-        D,
-        MR,
-        ZF,
-        HR,
-        CIO,
-        LR
+        // ── KV Common ──
+        DM, D, MR, ZF, HR, LR, CIO,
+        // ── Extended / other areas ──
+        EM,  // Extended Data Memory
+        W,   // Work Area (CIO sub-range on some models)
+        R,   // Internal Relay (some models use R instead of MR)
+        CR,  // Control Relay
+        TN,  // Timer (current value)
+        CN,  // Counter (current value)
+        T,   // Timer (contact/coil alias)
+        C,   // Counter (contact/coil alias)
+        AT,  // Analog Timer
+        CM,  // Control Memory
     }
 
     /// <summary>
@@ -42,7 +48,7 @@ namespace TomasTech_Plc_Keyence
     }
 
     /// <summary>
-    /// Represents a PLC memory address such as "DM100", "DM100.U", "DM100.D".
+    /// Represents a PLC memory address such as "DM100", "DM100.U", "ZF520000.S".
     /// </summary>
     public sealed class PlcAddress
     {
@@ -51,9 +57,15 @@ namespace TomasTech_Plc_Keyence
         public string Raw { get; }
         public PlcDataType DataType { get; }
 
-        PlcAddress(string raw, PlcWordType type, int offset, PlcDataType dataType)
+        // ── เก็บ prefix จริงที่ user กรอก (ใช้ใน BaseAddress แทน WordType.ToString())
+        // เพื่อให้ area ที่ยังไม่อยู่ใน enum เช่น EM, R, CM ฯลฯ ยังส่ง command ถูกต้อง
+        // และไม่ส่ง "RD Unknown520000" ซึ่งทำให้ PLC ตอบกลับ E1
+        readonly string _rawPrefix;
+
+        PlcAddress(string raw, string rawPrefix, PlcWordType type, int offset, PlcDataType dataType)
         {
             Raw = raw;
+            _rawPrefix = rawPrefix;
             WordType = type;
             Offset = offset;
             DataType = dataType;
@@ -64,7 +76,7 @@ namespace TomasTech_Plc_Keyence
             if (string.IsNullOrWhiteSpace(input)) throw new ArgumentNullException(nameof(input));
             var s = input.Trim().ToUpperInvariant();
 
-            // Detect suffix
+            // Detect suffix (.U .S .D .H .L .B)
             var dataType = PlcDataType.None;
             int dotIndex = s.LastIndexOf('.');
             if (dotIndex > 0 && dotIndex < s.Length - 1)
@@ -72,52 +84,63 @@ namespace TomasTech_Plc_Keyence
                 var suffix = s.Substring(dotIndex + 1);
                 dataType = suffix switch
                 {
-                    "U" => PlcDataType.U,
-                    "S" => PlcDataType.S,
-                    "D" => PlcDataType.D,
-                    "H" => PlcDataType.H,
-                    "L" => PlcDataType.L,
-                    "B" => PlcDataType.B,
-                    _ => PlcDataType.None
+                    "U"  => PlcDataType.U,
+                    "S"  => PlcDataType.S,
+                    "D"  => PlcDataType.D,
+                    "H"  => PlcDataType.H,
+                    "L"  => PlcDataType.L,
+                    "B"  => PlcDataType.B,
+                    _    => PlcDataType.None
                 };
-
                 if (dataType != PlcDataType.None)
-                {
                     s = s.Substring(0, dotIndex);
-                }
             }
 
-            // split alpha prefix and numeric suffix
+            // แยก alpha prefix กับ numeric offset
             int i = 0;
             while (i < s.Length && char.IsLetter(s[i])) i++;
-            if (i == 0) throw new FormatException($"Address must start with a word type. Input: {input}");
-            var prefix = s.Substring(0, i);
-            var rest = s.Substring(i);
+            if (i == 0) throw new FormatException($"Address must start with a device type letter. Input: {input}");
+
+            var prefix = s.Substring(0, i);   // เช่น "ZF", "MR", "EM", "R"
+            var rest   = s.Substring(i);       // เช่น "520000", "6410"
 
             if (rest.Length == 0 || !int.TryParse(rest, out var offset))
                 throw new FormatException($"Address must contain a numeric offset. Input: {input}");
 
+            // Map prefix → enum (เพื่อ type-safe ใน code ที่ต้องการ switch บน WordType)
             PlcWordType type = prefix switch
             {
-                "DM" => PlcWordType.DM,
-                "D" => PlcWordType.D,
-                "MR" => PlcWordType.MR,
-                "ZF" => PlcWordType.ZF,
-                "HR" => PlcWordType.HR,
+                "DM"  => PlcWordType.DM,
+                "D"   => PlcWordType.D,
+                "MR"  => PlcWordType.MR,
+                "ZF"  => PlcWordType.ZF,
+                "HR"  => PlcWordType.HR,
                 "CIO" => PlcWordType.CIO,
-                "LR" => PlcWordType.LR,
-                _ => PlcWordType.Unknown
+                "LR"  => PlcWordType.LR,
+                "EM"  => PlcWordType.EM,
+                "W"   => PlcWordType.W,
+                "R"   => PlcWordType.R,
+                "CR"  => PlcWordType.CR,
+                "TN"  => PlcWordType.TN,
+                "CN"  => PlcWordType.CN,
+                "T"   => PlcWordType.T,
+                "C"   => PlcWordType.C,
+                "AT"  => PlcWordType.AT,
+                "CM"  => PlcWordType.CM,
+                _     => PlcWordType.Unknown
             };
 
-            return new PlcAddress(input, type, offset, dataType); // Keep original raw input or normalized? Input better for logging
+            return new PlcAddress(input, prefix, type, offset, dataType);
         }
 
-        public override string ToString() => Raw; // Or rebuild from parts? Keep valid original.
-        
+        public override string ToString() => Raw;
+
         /// <summary>
-        /// Returns the base address string without suffix (e.g. "DM100.U" -> "DM100").
+        /// Returns the base address string without suffix.
+        /// ใช้ raw prefix จาก user input (ไม่ใช้ enum.ToString()) เพื่อป้องกัน E1
+        /// เช่น "ZF520000.U" → "ZF520000",  "EM100" → "EM100",  "R200" → "R200"
         /// </summary>
-        public string BaseAddress => $"{WordType}{Offset}";
+        public string BaseAddress => $"{_rawPrefix}{Offset}";
     }
 
     /// <summary>
@@ -218,17 +241,18 @@ namespace TomasTech_Plc_Keyence
 
             var resp = await SendCommandAsync(cmd, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrEmpty(resp)) return null;
+            var respText = resp!; // non-null and non-empty, guarded above
 
             // Response check:
             // "E0", "E1" etc on error.
-            if (resp.StartsWith("E") && resp.Length < 10) // Simple heuristic for error code
-                throw new InvalidOperationException($"PLC Error: {resp}");
+            if (respText.StartsWith("E") && respText.Length < 10) // Simple heuristic for error code
+                throw new InvalidOperationException($"PLC Error: {respText}");
 
             // Note: Upper Link RD/RDS usually returns just values directly.
             // e.g. "12345" or "10 20 30"
             // Some modes might prefix "OK".
             // We'll strip "OK" if present.
-            var valueStr = resp;
+            var valueStr = respText;
             if (valueStr.StartsWith("OK")) valueStr = valueStr.Substring(2).Trim();
 
             var parts = valueStr.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);

@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore "TomasTech Plc Keyence.slnx"
+
+      - name: Build (Release, warnings as errors)
+        run: dotnet build "TomasTech Plc Keyence.slnx" -c Release --no-restore /warnaserror
+
+      - name: Test
+        run: dotnet test "TomasTech Plc Keyence.slnx" -c Release --no-build
+
+      - name: Pack
+        run: dotnet pack "TomasTech Plc Keyence/TomasTech Plc Keyence.csproj" -c Release --no-build -o ./artifacts
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: ./artifacts/*.*nupkg

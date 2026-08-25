@@ -11,15 +11,27 @@
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 
-		<Version>1.1.0</Version>
+		<Version>1.2.0</Version>
 		<Authors>Tomas Tech</Authors>
 		<Company>Tomas Tech</Company>
 		<Description>A C# library for communication with Keyence PLC devices, providing read/write operations and reusable components for industrial automation.</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<RepositoryUrl>https://github.com/pattana1902/TomasTech-Plc-Keyence-Library</RepositoryUrl>
-		<PackageReadmeFile>KeyenceTcpClient_MANUAL.md</PackageReadmeFile>
+		<RepositoryType>git</RepositoryType>
+		<PackageProjectUrl>https://github.com/pattana1902/TomasTech-Plc-Keyence-Library</PackageProjectUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageTags>keyence;plc;industrial-automation;upper-link;tcp;automation</PackageTags>
+		<PackageReleaseNotes>See https://github.com/pattana1902/TomasTech-Plc-Keyence-Library/blob/master/CHANGELOG.md</PackageReleaseNotes>
 		<Title>TomasTech.Plc.Keyence</Title>
 		<Product>TomasTech PLC Keyence Library</Product>
+
+		<!-- Symbol packages + SourceLink: lets consumers step into this library's real source
+		     from the .pdb when debugging, instead of decompiled/no source. -->
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
@@ -34,6 +46,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="" />
 		<None Include="KeyenceTcpClient_MANUAL.md" Pack="true" PackagePath="" />
 	</ItemGroup>
 </Project>
