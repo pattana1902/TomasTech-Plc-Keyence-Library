@@ -6,33 +6,39 @@ on:
   pull_request:
     branches: [master]
 
+env:
+  LIB_CSPROJ: TomasTech Plc Keyence.csproj
+  TEST_CSPROJ: tests/TomasTech Plc Keyence.Tests/TomasTech Plc Keyence.Tests.csproj
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 8.0.x
 
       - name: Restore
-        run: dotnet restore "TomasTech Plc Keyence.slnx"
+        run: |
+          dotnet restore "$LIB_CSPROJ"
+          dotnet restore "$TEST_CSPROJ"
 
-      - name: Build (Release, warnings as errors)
-        run: dotnet build "TomasTech Plc Keyence.slnx" -c Release --no-restore /warnaserror
+      - name: Build library (all target frameworks, warnings as errors)
+        run: dotnet build "$LIB_CSPROJ" -c Release --no-restore -warnaserror
 
       - name: Test
-        run: dotnet test "TomasTech Plc Keyence.slnx" -c Release --no-build
+        run: dotnet test "$TEST_CSPROJ" -c Release --no-restore
 
       - name: Pack
-        run: dotnet pack "TomasTech Plc Keyence/TomasTech Plc Keyence.csproj" -c Release --no-build -o ./artifacts
+        run: dotnet pack "$LIB_CSPROJ" -c Release --no-build -o ./artifacts
 
       - name: Upload package artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nuget-package
           path: ./artifacts/*.*nupkg

@@ -3,6 +3,13 @@
 All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-08-25
+
+### Fixed
+- CI workflow failed on every run: the test project lived outside the git repository (a sibling folder, not a subfolder), so it was never committed/pushed and the checked-out repo on CI couldn't find it. Moved the test project to `tests/TomasTech Plc Keyence.Tests/` inside the repo and fixed the `.slnx` and `ProjectReference` paths accordingly.
+- CI workflow restored/built/tested via the `.slnx` solution file, which requires a newer SDK than the `8.0.x` band the workflow pinned. Switched to restoring/building/testing individual `.csproj` files directly, which works on any SDK that supports the target framework.
+- Bumped `actions/checkout`, `actions/setup-dotnet`, and `actions/upload-artifact` to their latest majors to clear the Node.js 20 deprecation warning.
+
 ## [1.2.0] - 2026-08-25
 
 ### Fixed

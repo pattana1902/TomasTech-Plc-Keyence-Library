@@ -11,7 +11,7 @@
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 
-		<Version>1.2.0</Version>
+		<Version>1.2.1</Version>
 		<Authors>Tomas Tech</Authors>
 		<Company>Tomas Tech</Company>
 		<Description>A C# library for communication with Keyence PLC devices, providing read/write operations and reusable components for industrial automation.</Description>
@@ -52,5 +52,14 @@
 	<ItemGroup>
 		<None Include="README.md" Pack="true" PackagePath="" />
 		<None Include="KeyenceTcpClient_MANUAL.md" Pack="true" PackagePath="" />
+	</ItemGroup>
+
+	<!-- The test project lives in tests/ under this same directory (so it's part of this git repo,
+	     not a sibling outside it) — exclude it from this project's own default item globs so the
+	     library doesn't try to compile/pack the test sources as part of itself. -->
+	<ItemGroup>
+		<Compile Remove="tests/**/*.cs" />
+		<EmbeddedResource Remove="tests/**/*" />
+		<None Remove="tests/**/*" />
 	</ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
 <Solution>
   <Project Path="TomasTech Plc Keyence.csproj" />
-  <Project Path="..\TomasTech Plc Keyence.Tests\TomasTech Plc Keyence.Tests.csproj" />
+  <Project Path="tests\TomasTech Plc Keyence.Tests\TomasTech Plc Keyence.Tests.csproj" />
 </Solution>
